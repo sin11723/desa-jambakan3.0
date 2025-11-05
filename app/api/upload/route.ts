@@ -31,7 +31,26 @@ export async function POST(request: NextRequest) {
     // Buat nama file unik dengan timestamp
     const timestamp = Date.now()
     const fileExtension = file.name.split('.').pop()
-    const fileName = `tenun_${timestamp}.${fileExtension}`
+    
+    // Cek tipe upload dari referer atau custom header
+    const referer = request.headers.get('referer') || ''
+    const uploadType = request.headers.get('x-upload-type') || 'general'
+    
+    // Tentukan prefix berdasarkan tipe upload
+    let prefix = 'upload'
+    if (referer.includes('kelola-tenun') || uploadType === 'tenun') {
+      prefix = 'tenun'
+    } else if (referer.includes('kelola-struktur') || uploadType === 'struktur') {
+      prefix = 'struktur'
+    } else if (referer.includes('kelola-berita') || uploadType === 'berita') {
+      prefix = 'berita'
+    } else if (referer.includes('kelola-galeri') || uploadType === 'galeri') {
+      prefix = 'galeri'
+    } else if (referer.includes('kelola-karawitan') || uploadType === 'karawitan') {
+      prefix = 'karawitan'
+    }
+    
+    const fileName = `${prefix}_${timestamp}.${fileExtension}`
 
     // Pastikan folder uploads ada
     const uploadDir = join(process.cwd(), 'public', 'uploads')

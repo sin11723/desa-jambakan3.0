@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { LogOut, FileText, ImageIcon, Music, ShoppingBag } from "lucide-react"
+import { LogOut, FileText, ImageIcon, Music, ShoppingBag, Users } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminLogoutWarning from "@/components/AdminLogoutWarning"
 
@@ -18,6 +18,7 @@ interface DashboardStats {
   totalActivities: number
   totalGallery: number
   totalKarawitan: number
+  totalStruktur: number
 }
 
 export default function AdminDashboard() {
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
     totalActivities: 0,
     totalGallery: 0,
     totalKarawitan: 0,
+    totalStruktur: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -39,11 +41,12 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
       try {
-        const [tenun, activities, gallery, karawitan] = await Promise.all([
+        const [tenun, activities, gallery, karawitan, struktur] = await Promise.all([
           fetch("/api/tenun").then((r) => r.json()),
           fetch("/api/activities").then((r) => r.json()),
           fetch("/api/gallery").then((r) => r.json()),
           fetch("/api/karawitan").then((r) => r.json()),
+          fetch("/api/struktur").then((r) => r.json()),
         ])
 
         setStats({
@@ -51,6 +54,7 @@ export default function AdminDashboard() {
           totalActivities: activities.length || 0,
           totalGallery: gallery.length || 0,
           totalKarawitan: karawitan.length || 0,
+          totalStruktur: struktur.length || 0,
         })
       } catch (error) {
         console.error("[v0] Error:", error)
@@ -103,6 +107,13 @@ export default function AdminDashboard() {
       count: stats.totalKarawitan,
       description: "Kelola konten karawitan",
     },
+    {
+      title: "Kelola Struktur",
+      icon: Users,
+      href: "/admin/kelola-struktur",
+      count: stats.totalStruktur,
+      description: "Kelola struktur organisasi desa",
+    },
   ]
 
   return (
@@ -143,7 +154,7 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
               <div className="bg-background border border-border rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -181,6 +192,16 @@ export default function AdminDashboard() {
                     <p className="text-3xl font-bold mt-2">{stats.totalKarawitan}</p>
                   </div>
                   <Music size={32} className="text-primary opacity-50" />
+                </div>
+              </div>
+
+              <div className="bg-background border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground font-medium">Total Struktur</p>
+                    <p className="text-3xl font-bold mt-2">{stats.totalStruktur}</p>
+                  </div>
+                  <Users size={32} className="text-primary opacity-50" />
                 </div>
               </div>
             </div>

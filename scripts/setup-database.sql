@@ -81,3 +81,17 @@ INSERT INTO gallery (title, description, image_url, category) VALUES
 ('Dokumentasi Tenun Tradisional', 'Proses pembuatan tenun dengan tangan', '/placeholder.svg?height=400&width=400', 'Tenun'),
 ('Kegiatan Gotong Royong', 'Kebersamaan masyarakat dalam pembangunan', '/placeholder.svg?height=400&width=400', 'Kegiatan'),
 ('Festival Karawitan', 'Perayaan kesenian tradisional desa', '/placeholder.svg?height=400&width=400', 'Budaya');
+
+-- Tabel Struktur Organisasi (Organizational Structure)
+CREATE TABLE IF NOT EXISTS struktur_members (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  position VARCHAR(200) NOT NULL,
+  contact VARCHAR(100),
+  description TEXT,
+  photo_url VARCHAR(500),
+  section VARCHAR(100) DEFAULT 'pengurus',
+  order_index INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
