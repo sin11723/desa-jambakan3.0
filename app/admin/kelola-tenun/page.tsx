@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
-import AdminLogoutWarning from "@/components/AdminLogoutWarning"
+import AdminPageWrapper from "@/components/AdminPageWrapper"
 
 interface TenunProduct {
   id: number
@@ -276,198 +276,187 @@ export default function KelolaTenunPage() {
   }
 
   return (
-    <main className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="bg-background border-b border-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-primary hover:text-primary/80 transition-colors">
-              <ArrowLeft size={24} />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Kelola Karya Tenun</h1>
-              <p className="text-sm text-muted-foreground">Total: {products.length} karya</p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setEditingId(null)
-              setFormData({
-                title: "",
-                description: "",
-                image_url: "",
-                technique: "",
-                material: "",
-                price: 0,
-                status: "published",
-              })
-              setSelectedFile(null)
-              setFileError(null)
-              setIsFormOpen(!isFormOpen)
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus size={20} />
-            Tambah Karya
-          </button>
-        </div>
+    <AdminPageWrapper 
+      title="Kelola Karya Tenun" 
+      description={`Total: ${products.length} karya`}
+    >
+      {/* Tombol Tambah Karya */}
+      <div className="mb-6 flex justify-end">
+        <button
+          onClick={() => {
+            setEditingId(null)
+            setFormData({
+              title: "",
+              description: "",
+              image_url: "",
+              technique: "",
+              material: "",
+              price: 0,
+              status: "published",
+            })
+            setSelectedFile(null)
+            setFileError(null)
+            setIsFormOpen(!isFormOpen)
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={20} />
+          Tambah Karya
+        </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Form */}
-        {isFormOpen && (
-          <div className="bg-background border border-border rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4">
-              {editingId ? "Edit Karya Tenun" : "Tambah Karya Tenun Baru"}
-            </h2>
-            <form onSubmit={editingId ? handleUpdateProduct : handleAddProduct} className="space-y-4">
+      {/* Form */}
+      {isFormOpen && (
+        <div className="bg-background border border-border rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">
+            {editingId ? "Edit Karya Tenun" : "Tambah Karya Tenun Baru"}
+          </h2>
+          <form onSubmit={editingId ? handleUpdateProduct : handleAddProduct} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2">Judul Karya</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Nama karya tenun"
+                required
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Deskripsi</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Deskripsi lengkap karya"
+                rows={4}
+                required
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Judul Karya</label>
+                <label className="block text-sm font-semibold mb-2">Teknik</label>
                 <input
                   type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Nama karya tenun"
-                  required
+                  value={formData.technique}
+                  onChange={(e) => setFormData({ ...formData, technique: e.target.value })}
+                  placeholder="Mis: Tangan"
                   className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Deskripsi</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Deskripsi lengkap karya"
-                  rows={4}
-                  required
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Teknik</label>
-                  <input
-                    type="text"
-                    value={formData.technique}
-                    onChange={(e) => setFormData({ ...formData, technique: e.target.value })}
-                    placeholder="Mis: Tangan"
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Bahan</label>
-                  <input
-                    type="text"
-                    value={formData.material}
-                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                    placeholder="Mis: Benang Katun"
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Gambar Produk</label>
+                <label className="block text-sm font-semibold mb-2">Bahan</label>
                 <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  onChange={handleFileSelect}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                  type="text"
+                  value={formData.material}
+                  onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                  placeholder="Mis: Benang Katun"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
                 />
-                  
-                {/* Error Message */}
-                {fileError && (
-                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-sm text-red-600 font-medium">{fileError}</p>
-                    </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Gambar Produk</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleFileSelect}
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+              />
+                
+              {/* Error Message */}
+              {fileError && (
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-red-600 font-medium">{fileError}</p>
                   </div>
-                )}
-
-                {/* Validation Info */}
-                <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                  <p className="text-xs text-muted-foreground mt-1">
-                  Format yang didukung: JPEG, PNG, GIF, WebP. Maksimal 2MB.
-                </p>
                 </div>
+              )}
 
-                {/* Selected File Info */}
-                {selectedFile && !fileError && (
-                  <p className="text-sm text-green-600 mt-1">
-                    File dipilih: {selectedFile.name} ({formatFileSize(selectedFile.size)})
-                  </p>
-                )}
-              </div>
+              {/* Validation Info */}
+              <p className="text-xs text-muted-foreground mt-1">
+                Format yang didukung: JPEG, PNG, GIF, WebP. Maksimal 2MB.
+              </p>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">Harga (opsional)</label>
-                <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value ? Number.parseInt(e.target.value) : 0 })}
-                  placeholder="0"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Status Publikasi</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as "draft" | "published" })}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
-                >
-                  <option value="published">Langsung Publish</option>
-                  <option value="draft">Simpan sebagai Draft</option>
-                </select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Draft tidak akan tampil di halaman publik, hanya admin yang bisa melihat
+              {/* Selected File Info */}
+              {selectedFile && !fileError && (
+                <p className="text-sm text-green-600 mt-1">
+                  File dipilih: {selectedFile.name} ({formatFileSize(selectedFile.size)})
                 </p>
-              </div>
+              )}
+            </div>
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="submit"
-                  disabled={uploading || !!fileError}
-                  className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    uploading || fileError 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  }`}
-                >
-                  {uploading ? "Mengupload..." : (editingId ? "Update Karya" : "Simpan Karya")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsFormOpen(false)
-                    setEditingId(null)
-                    setFormData({
-                      title: "",
-                      description: "",
-                      image_url: "",
-                      technique: "",
-                      material: "",
-                      price: 0,
-                      status: "published",
-                    })
-                    setSelectedFile(null)
-                    setFileError(null)
-                  }}
-                  className="flex-1 px-4 py-2 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary/5 transition-colors"
-                >
-                  Batal
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+            <div>
+              <label className="block text-sm font-semibold mb-2">Harga (opsional)</label>
+              <input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value ? Number.parseInt(e.target.value) : 0 })}
+                placeholder="0"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Status Publikasi</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as "draft" | "published" })}
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary bg-background"
+              >
+                <option value="published">Langsung Publish</option>
+                <option value="draft">Simpan sebagai Draft</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Draft tidak akan tampil di halaman publik, hanya admin yang bisa melihat
+              </p>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={uploading || !!fileError}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  uploading || fileError 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                }`}
+              >
+                {uploading ? "Mengupload..." : (editingId ? "Update Karya" : "Simpan Karya")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsFormOpen(false)
+                  setEditingId(null)
+                  setFormData({
+                    title: "",
+                    description: "",
+                    image_url: "",
+                    technique: "",
+                    material: "",
+                    price: 0,
+                    status: "published",
+                  })
+                  setSelectedFile(null)
+                  setFileError(null)
+                }}
+                className="flex-1 px-4 py-2 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary/5 transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
         {/* Products List */}
         {!isFormOpen && (
@@ -532,8 +521,6 @@ export default function KelolaTenunPage() {
             </div>
           )
         )}
-      </div>
-      <AdminLogoutWarning />
-    </main>
+    </AdminPageWrapper>
   )
 }

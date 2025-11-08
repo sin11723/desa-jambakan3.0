@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
-import AdminLogoutWarning from "@/components/AdminLogoutWarning"
+import AdminPageWrapper from "@/components/AdminPageWrapper"
 
 interface GalleryItem {
   id: number
@@ -191,36 +191,26 @@ export default function KelolaGaleriPage() {
   }
 
   return (
-    <main className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="bg-background border-b border-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-primary hover:text-primary/80 transition-colors">
-              <ArrowLeft size={24} />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Kelola Galeri</h1>
-              <p className="text-sm text-muted-foreground">Total: {gallery.length} foto</p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              if (isFormOpen) {
-                resetForm()
-              } else {
-                setIsFormOpen(true)
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus size={20} />
-            {isFormOpen ? 'Batal' : 'Tambah Foto'}
-          </button>
-        </div>
+    <AdminPageWrapper 
+      title="Kelola Galeri" 
+      description={`Total: ${gallery.length} foto`}
+    >
+      {/* Tombol Tambah Foto */}
+      <div className="mb-6 flex justify-end">
+        <button
+          onClick={() => {
+            if (isFormOpen) {
+              resetForm()
+            } else {
+              setIsFormOpen(true)
+            }
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={20} />
+          {isFormOpen ? 'Batal' : 'Tambah Foto'}
+        </button>
       </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Form */}
         {isFormOpen && (
           <div className="bg-background border border-border rounded-lg p-6 mb-8">
@@ -401,8 +391,6 @@ export default function KelolaGaleriPage() {
             </div>
           )
         )}
-      </div>
-      <AdminLogoutWarning />
-    </main>
+      </AdminPageWrapper>
   )
 }

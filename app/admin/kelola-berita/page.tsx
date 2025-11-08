@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft, Calendar } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
-import AdminLogoutWarning from "@/components/AdminLogoutWarning"
+import AdminPageWrapper from "@/components/AdminPageWrapper"
 
 interface Activity {
   id: number
@@ -246,44 +246,34 @@ export default function KelolaBeritaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="bg-background border-b border-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-primary hover:text-primary/80 transition-colors">
-              <ArrowLeft size={24} />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Kelola Berita & Kegiatan</h1>
-              <p className="text-sm text-muted-foreground">Total: {activities.length} berita</p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setEditingId(null)
-              setSelectedFile(null)
-              setFileError(null)
-              setFormData({
-                title: "",
-                description: "",
-                content: "",
-                category: "Kegiatan",
-                image_url: "",
-                event_date: new Date().toISOString().split("T")[0],
-                status: "published",
-              })
-              setIsFormOpen(!isFormOpen)
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus size={20} />
-            Tambah Berita
-          </button>
-        </div>
+    <AdminPageWrapper 
+      title="Kelola Berita & Kegiatan" 
+      description={`Total: ${activities.length} berita`}
+    >
+      {/* Tombol Tambah Berita */}
+      <div className="mb-6 flex justify-end">
+        <button
+          onClick={() => {
+            setEditingId(null)
+            setSelectedFile(null)
+            setFileError(null)
+            setFormData({
+              title: "",
+              description: "",
+              content: "",
+              category: "Kegiatan",
+              image_url: "",
+              event_date: new Date().toISOString().split("T")[0],
+              status: "published",
+            })
+            setIsFormOpen(!isFormOpen)
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={20} />
+          Tambah Berita
+        </button>
       </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Form */}
         {isFormOpen && (
           <div className="bg-background border border-border rounded-lg p-6 mb-8">
@@ -497,8 +487,6 @@ export default function KelolaBeritaPage() {
         )}
           </>
         )}
-      </div>
-      <AdminLogoutWarning />
-    </main>
+      </AdminPageWrapper>
   )
 }
