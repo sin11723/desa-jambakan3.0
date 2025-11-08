@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
+import Pagination from "@/components/Pagination"
 
 interface GalleryItem {
   id: number
@@ -36,6 +37,11 @@ export default function KelolaGaleriPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadedFileInfo, setUploadedFileInfo] = useState<{name: string, size: number} | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  
+  // State untuk pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(9) // 3x3 grid untuk galeri
+  const [filteredGallery, setFilteredGallery] = useState<GalleryItem[]>([])
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -52,10 +58,19 @@ export default function KelolaGaleriPage() {
     fetchGallery()
   }, [isAuthenticated, router])
 
+  // Effect untuk pagination
+  useEffect(() => {
+    setFilteredGallery(gallery)
+  }, [gallery])
+
   const fetchGallery = async () => {
     try {
       const res = await fetch("/api/gallery")
-      if (res.ok) setGallery(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        setGallery(data)
+        setCurrentPage(1) // Reset ke halaman pertama
+      }
     } catch (error) {
       console.error("[v0] Error:", error)
     } finally {
@@ -189,6 +204,18 @@ export default function KelolaGaleriPage() {
       console.error("[v0] Error:", error)
     }
   }
+
+  // Fungsi untuk handle perubahan halaman
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Hitung data untuk halaman saat ini
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredGallery.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredGallery.length / itemsPerPage)
 
   return (
     <AdminPageWrapper 
@@ -347,12 +374,12 @@ export default function KelolaGaleriPage() {
             </div>
           ) : (
             <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
-              {gallery.length === 0 ? (
+              {currentItems.length === 0 ? (
                 <div className="col-span-full text-center py-12 bg-background rounded-lg border border-border">
                   <p className="text-muted-foreground">Belum ada foto di galeri. Tambahkan foto baru!</p>
                 </div>
               ) : (
-                gallery.map((item) => (
+                currentItems.map((item) => (
                   <div
                     key={item.id}
                     className="mb-6 bg-background border border-border rounded-lg overflow-hidden break-inside-avoid group hover:border-primary transition-all"
@@ -391,6 +418,18 @@ export default function KelolaGaleriPage() {
             </div>
           )
         )}
-      </AdminPageWrapper>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredGallery.length}
+            showInfo={true}
+          />
+        )}
+    </AdminPageWrapper>
   )
 }

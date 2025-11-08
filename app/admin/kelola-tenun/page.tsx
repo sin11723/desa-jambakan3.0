@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
+import Pagination from "@/components/Pagination"
 
 interface TenunProduct {
   id: number
@@ -33,6 +34,9 @@ export default function KelolaTenunPage() {
   const router = useRouter()
   const { isAuthenticated } = useAdminAuth()
   const [products, setProducts] = useState<TenunProduct[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<TenunProduct[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(9)
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -49,6 +53,12 @@ export default function KelolaTenunPage() {
   const [uploading, setUploading] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/admin")
@@ -58,6 +68,10 @@ export default function KelolaTenunPage() {
     fetchProducts()
   }, [isAuthenticated, router])
 
+  useEffect(() => {
+    setFilteredProducts(products)
+  }, [products])
+
   const fetchProducts = async () => {
     try {
       const res = await fetch("/api/tenun?includeAll=true")
@@ -66,7 +80,13 @@ export default function KelolaTenunPage() {
       console.error("[v0] Error:", error)
     } finally {
       setLoading(false)
+      setCurrentPage(1)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -466,12 +486,12 @@ export default function KelolaTenunPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {products.length === 0 ? (
+              {currentItems.length === 0 ? (
                 <div className="text-center py-12 bg-background rounded-lg border border-border">
                   <p className="text-muted-foreground">Belum ada karya tenun. Tambahkan karya baru!</p>
                 </div>
               ) : (
-                products.map((product) => (
+                currentItems.map((product) => (
                   <div
                     key={product.id}
                     className="bg-background border border-border rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-shadow"
@@ -520,6 +540,18 @@ export default function KelolaTenunPage() {
               )}
             </div>
           )
+        )}
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredProducts.length}
+            showInfo={true}
+          />
         )}
     </AdminPageWrapper>
   )

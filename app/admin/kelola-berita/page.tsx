@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft, Calendar } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
+import Pagination from "@/components/Pagination"
 
 interface Activity {
   id: number
@@ -39,6 +40,11 @@ export default function KelolaBeritaPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  
+  // State untuk pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([])
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -58,10 +64,19 @@ export default function KelolaBeritaPage() {
     fetchActivities()
   }, [isAuthenticated, router])
 
+  // Effect untuk pagination
+  useEffect(() => {
+    setFilteredActivities(activities)
+  }, [activities])
+
   const fetchActivities = async () => {
     try {
       const res = await fetch("/api/activities?includeAll=true")
-      if (res.ok) setActivities(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        setActivities(data)
+        setCurrentPage(1) // Reset ke halaman pertama setelah fetch data baru
+      }
     } catch (error) {
       console.error("[v0] Error:", error)
     } finally {
@@ -244,6 +259,18 @@ export default function KelolaBeritaPage() {
       setIsUploading(false)
     }
   }
+
+  // Fungsi untuk handle perubahan halaman
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Hitung data untuk halaman saat ini
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredActivities.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredActivities.length / itemsPerPage)
 
   return (
     <AdminPageWrapper 
@@ -436,12 +463,12 @@ export default function KelolaBeritaPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {activities.length === 0 ? (
+                {currentItems.length === 0 ? (
                   <div className="text-center py-12 bg-background rounded-lg border border-border">
                     <p className="text-muted-foreground">Belum ada berita. Tambahkan berita baru!</p>
                   </div>
                 ) : (
-                  activities.map((activity) => (
+                  currentItems.map((activity) => (
                 <div
                   key={activity.id}
                   className="bg-background border border-border rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-shadow"
@@ -484,7 +511,19 @@ export default function KelolaBeritaPage() {
               ))
             )}
           </div>
-        )}
+            )}
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                itemsPerPage={itemsPerPage}
+                totalItems={filteredActivities.length}
+                showInfo={true}
+              />
+            )}
           </>
         )}
       </AdminPageWrapper>

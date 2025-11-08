@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { LogOut, FileText, ImageIcon, Music, ShoppingBag, Users } from "lucide-react"
+import { LogOut, FileText, ImageIcon, Music, ShoppingBag, Users, PanelLeftOpen } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
 

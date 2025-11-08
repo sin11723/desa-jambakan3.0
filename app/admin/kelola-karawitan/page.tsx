@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
+import Pagination from "@/components/Pagination"
 
 interface Karawitan {
   id: number
@@ -21,6 +22,9 @@ export default function KelolaKarawaitanPage() {
   const router = useRouter()
   const { isAuthenticated } = useAdminAuth()
   const [karawitan, setKarawitan] = useState<Karawitan[]>([])
+  const [filteredKarawitan, setFilteredKarawitan] = useState<Karawitan[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -29,6 +33,12 @@ export default function KelolaKarawaitanPage() {
     content: "",
     image_url: "",
   })
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredKarawitan.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredKarawitan.length / itemsPerPage)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -39,6 +49,10 @@ export default function KelolaKarawaitanPage() {
     fetchKarawitan()
   }, [isAuthenticated, router])
 
+  useEffect(() => {
+    setFilteredKarawitan(karawitan)
+  }, [karawitan])
+
   const fetchKarawitan = async () => {
     try {
       const res = await fetch("/api/karawitan")
@@ -47,7 +61,13 @@ export default function KelolaKarawaitanPage() {
       console.error("[v0] Error:", error)
     } finally {
       setLoading(false)
+      setCurrentPage(1)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleAddKarawitan = async (e: React.FormEvent) => {
@@ -178,12 +198,12 @@ export default function KelolaKarawaitanPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {karawitan.length === 0 ? (
+            {currentItems.length === 0 ? (
               <div className="text-center py-12 bg-background rounded-lg border border-border">
                 <p className="text-muted-foreground">Belum ada konten karawitan. Tambahkan konten baru!</p>
               </div>
             ) : (
-              karawitan.map((item) => (
+              currentItems.map((item) => (
                 <div
                   key={item.id}
                   className="bg-background border border-border rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-shadow"
@@ -209,6 +229,18 @@ export default function KelolaKarawaitanPage() {
               ))
             )}
           </div>
+        )}
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredKarawitan.length}
+            showInfo={true}
+          />
         )}
     </AdminPageWrapper>
   )

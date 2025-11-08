@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import Pagination from '@/components/Pagination';
 
 interface StrukturMember {
   id: number;
@@ -37,6 +38,9 @@ interface StrukturMember {
 export default function KelolaStruktur() {
   const { user, isAuthenticated } = useAdminAuth();
   const [members, setMembers] = useState<StrukturMember[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<StrukturMember[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -66,6 +70,12 @@ export default function KelolaStruktur() {
     memberName: ''
   });
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredMembers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+
   // Fetch all members
   const fetchMembers = async () => {
     try {
@@ -83,6 +93,7 @@ export default function KelolaStruktur() {
       setError('Terjadi kesalahan saat mengambil data');
     } finally {
       setLoading(false);
+      setCurrentPage(1);
     }
   };
 
@@ -91,6 +102,10 @@ export default function KelolaStruktur() {
       fetchMembers();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    setFilteredMembers(members);
+  }, [members]);
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
@@ -202,6 +217,12 @@ export default function KelolaStruktur() {
       memberId: null,
       memberName: ''
     });
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Reset form
@@ -412,13 +433,13 @@ export default function KelolaStruktur() {
         <CardContent>
           {loading ? (
             <div className="text-center py-4">Memuat data...</div>
-          ) : members.length === 0 ? (
+          ) : currentItems.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
               Belum ada anggota struktur organisasi yang ditambahkan.
             </div>
           ) : (
             <div className="space-y-4">
-              {members.map((member) => (
+              {currentItems.map((member) => (
                 <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-4">
                     {member.photo_url && (
@@ -478,6 +499,18 @@ export default function KelolaStruktur() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredMembers.length}
+          showInfo={true}
+        />
+      )}
       </div>
     </main>
   );

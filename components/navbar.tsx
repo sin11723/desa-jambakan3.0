@@ -2,9 +2,16 @@
 
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import { Menu, X, ChevronDown } from "lucide-react"
 
 export default function Navbar() {
+  const pathname = usePathname()
+  const isAdminPath = pathname.startsWith('/admin')
+
+  if (isAdminPath) {
+    return null
+  }
   const [isOpen, setIsOpen] = useState(false)
   const [isBudayaOpen, setIsBudayaOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
