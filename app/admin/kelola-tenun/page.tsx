@@ -9,6 +9,16 @@ import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
 import Pagination from "@/components/Pagination"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface TenunProduct {
   id: number
@@ -38,6 +48,8 @@ export default function KelolaTenunPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(9)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -50,8 +62,19 @@ export default function KelolaTenunPage() {
   })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  
+  // State untuk modal konfirmasi delete
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    productId: number | null;
+    productName: string;
+  }>({
+    isOpen: false,
+    productId: null,
+    productName: ''
+  })
 
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage
@@ -71,13 +94,32 @@ export default function KelolaTenunPage() {
   useEffect(() => {
     setFilteredProducts(products)
   }, [products])
+  
+  // Auto clear error dan success messages
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+  
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
 
   const fetchProducts = async () => {
     try {
+      setLoading(true)
+      setError('')
+      setSuccess('')
       const res = await fetch("/api/tenun?includeAll=true")
       if (res.ok) setProducts(await res.json())
     } catch (error) {
       console.error("[v0] Error:", error)
+      setError('Gagal memuat data produk tenun')
     } finally {
       setLoading(false)
       setCurrentPage(1)
@@ -94,7 +136,7 @@ export default function KelolaTenunPage() {
 
     // Validasi form
     if (!formData.title.trim() || !formData.description.trim()) {
-      alert("Judul dan deskripsi harus diisi!")
+      setError("Judul dan deskripsi harus diisi!")
       return
     }
 
@@ -103,7 +145,7 @@ export default function KelolaTenunPage() {
 
       // Upload gambar jika ada file yang dipilih
       if (selectedFile) {
-        setUploading(true)
+        setIsUploading(true)
         const uploadFormData = new FormData()
         uploadFormData.append('file', selectedFile)
 
@@ -117,11 +159,11 @@ export default function KelolaTenunPage() {
           imageUrl = uploadResult.imageUrl
         } else {
           const uploadError = await uploadRes.json()
-          alert(uploadError.error || "Gagal mengupload gambar")
-          setUploading(false)
+          setError(uploadError.error || "Gagal mengupload gambar")
+          setIsUploading(false)
           return
         }
-        setUploading(false)
+        setIsUploading(false)
       }
 
       // Simpan produk dengan URL gambar
@@ -151,17 +193,19 @@ export default function KelolaTenunPage() {
         setSelectedFile(null)
         setFileError(null)
         setIsFormOpen(false)
+        setSuccess('Karya tenun berhasil ditambahkan')
+        console.log('Success message set:', 'Karya tenun berhasil ditambahkan')
         fetchProducts()
       } else {
         const errorData = await res.json()
         console.error("Failed to create product:", errorData)
-        alert("Gagal menyimpan produk. Silakan coba lagi.")
+        setError("Gagal menyimpan produk. Silakan coba lagi.")
       }
     } catch (error) {
       console.error("[v0] Error:", error)
-      alert("Terjadi kesalahan. Silakan coba lagi.")
+      setError("Terjadi kesalahan. Silakan coba lagi.")
     } finally {
-      setUploading(false)
+      setIsUploading(false)
     }
   }
 
@@ -212,7 +256,7 @@ export default function KelolaTenunPage() {
 
     // Validasi form
     if (!formData.title.trim() || !formData.description.trim()) {
-      alert("Judul dan deskripsi harus diisi!")
+      setError("Judul dan deskripsi harus diisi!")
       return
     }
 
@@ -221,7 +265,7 @@ export default function KelolaTenunPage() {
 
       // Upload gambar jika ada file yang dipilih
       if (selectedFile) {
-        setUploading(true)
+        setIsUploading(true)
         const uploadFormData = new FormData()
         uploadFormData.append('file', selectedFile)
 
@@ -235,11 +279,11 @@ export default function KelolaTenunPage() {
           imageUrl = uploadResult.imageUrl
         } else {
           const uploadError = await uploadRes.json()
-          alert(uploadError.error || "Gagal mengupload gambar")
-          setUploading(false)
+          setError(uploadError.error || "Gagal mengupload gambar")
+          setIsUploading(false)
           return
         }
-        setUploading(false)
+        setIsUploading(false)
       }
 
       // Update produk dengan URL gambar
@@ -270,29 +314,60 @@ export default function KelolaTenunPage() {
         setFileError(null)
         setEditingId(null)
         setIsFormOpen(false)
+        setSuccess('Karya tenun berhasil diperbarui')
+        console.log('Success message set:', 'Karya tenun berhasil diperbarui')
         fetchProducts()
       } else {
         const errorData = await res.json()
         console.error("Failed to update product:", errorData)
-        alert("Gagal mengupdate produk. Silakan coba lagi.")
+        setError("Gagal mengupdate produk. Silakan coba lagi.")
       }
     } catch (error) {
       console.error("[v0] Error:", error)
-      alert("Terjadi kesalahan. Silakan coba lagi.")
+      setError("Terjadi kesalahan. Silakan coba lagi.")
     } finally {
-      setUploading(false)
+      setIsUploading(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Yakin ingin menghapus produk ini?")) return
-
+  // Handle delete - membuka modal konfirmasi
+  const handleDelete = (id: number, name: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      productId: id,
+      productName: name
+    })
+  }
+  
+  // Konfirmasi delete dari modal
+  const confirmDelete = async () => {
+    if (!deleteConfirm.productId) return
+    
+    console.log("Attempting to delete product with ID:", deleteConfirm.productId)
+    
     try {
-      const res = await fetch(`/api/tenun/${id}`, { method: "DELETE" })
-      if (res.ok) fetchProducts()
+      const res = await fetch(`/api/tenun/${deleteConfirm.productId}/delete`, { method: "DELETE" })
+      console.log("Delete response status:", res.status)
+      
+      if (res.ok) {
+        setSuccess('Produk berhasil dihapus')
+        fetchProducts()
+      } else {
+        const errorData = await res.json()
+        console.log("Delete error response:", errorData)
+        setError(errorData.error || 'Gagal menghapus produk')
+      }
     } catch (error) {
-      console.error("[v0] Error:", error)
+      console.error("[v0] Error during delete:", error)
+      setError('Terjadi kesalahan saat menghapus produk')
+    } finally {
+      setDeleteConfirm({ isOpen: false, productId: null, productName: '' })
     }
+  }
+  
+  // Batal delete
+  const cancelDelete = () => {
+    setDeleteConfirm({ isOpen: false, productId: null, productName: '' })
   }
 
   return (
@@ -324,6 +399,19 @@ export default function KelolaTenunPage() {
           Tambah Karya
         </button>
       </div>
+
+      {/* Pesan Error dan Success */}
+      {error && (
+        <Alert variant="destructive" className="mb-4 bg-red-50 border-red-200">
+          <AlertDescription className="text-red-800 font-medium">{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert className="mb-4 bg-green-50 border-green-200">
+          <AlertDescription className="text-green-800 font-medium">{success}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Form */}
       {isFormOpen && (
@@ -443,14 +531,14 @@ export default function KelolaTenunPage() {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={uploading || !!fileError}
+                disabled={isUploading || !!fileError}
                 className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  uploading || fileError 
+                  isUploading || fileError 
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                     : 'bg-primary text-primary-foreground hover:bg-primary/90'
                 }`}
               >
-                {uploading ? "Mengupload..." : (editingId ? "Update Karya" : "Simpan Karya")}
+                {isUploading ? "Mengupload..." : (editingId ? "Update Karya" : "Simpan Karya")}
               </button>
               <button
                 type="button"
@@ -528,7 +616,7 @@ export default function KelolaTenunPage() {
                         <Edit2 size={20} className="text-primary" />
                       </button>
                       <button
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDelete(product.id, product.title)}
                         className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                         title="Hapus"
                       >
@@ -553,6 +641,27 @@ export default function KelolaTenunPage() {
             showInfo={true}
           />
         )}
+        
+        {/* Modal Konfirmasi Delete */}
+        <Dialog open={deleteConfirm.isOpen} onOpenChange={cancelDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Hapus</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus produk "{deleteConfirm.productName}"? 
+                Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={cancelDelete}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Hapus
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </AdminPageWrapper>
   )
 }

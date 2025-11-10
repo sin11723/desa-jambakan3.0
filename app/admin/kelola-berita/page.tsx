@@ -9,6 +9,16 @@ import { Plus, Edit2, Trash2, ArrowLeft, Calendar } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
 import Pagination from "@/components/Pagination"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Activity {
   id: number
@@ -41,6 +51,21 @@ export default function KelolaBeritaPage() {
   const [fileError, setFileError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   
+  // State untuk modal konfirmasi delete
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    activityId: number | null;
+    activityTitle: string;
+  }>({
+    isOpen: false,
+    activityId: null,
+    activityTitle: ''
+  })
+  
+  // State untuk pesan error dan success
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  
   // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -68,6 +93,22 @@ export default function KelolaBeritaPage() {
   useEffect(() => {
     setFilteredActivities(activities)
   }, [activities])
+
+  // Effect untuk timer success message
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
+
+  // Effect untuk timer error message
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
 
   const fetchActivities = async () => {
     try {
@@ -132,7 +173,7 @@ export default function KelolaBeritaPage() {
           imageUrl = uploadResult.imageUrl
         } else {
           const errorData = await uploadRes.json()
-          alert(errorData.error || 'Gagal mengupload gambar')
+          setError(errorData.error || 'Gagal mengupload gambar')
           return
         }
       }
@@ -159,25 +200,49 @@ export default function KelolaBeritaPage() {
         setSelectedFile(null)
         setFileError(null)
         setIsFormOpen(false)
+        setSuccess('Berita berhasil ditambahkan')
         fetchActivities()
       }
     } catch (error) {
       console.error("[v0] Error:", error)
-      alert('Terjadi kesalahan saat menyimpan berita')
+      setError('Terjadi kesalahan saat menyimpan berita')
     } finally {
       setIsUploading(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Yakin ingin menghapus berita ini?")) return
-
+  const handleDelete = (id: number, title: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      activityId: id,
+      activityTitle: title
+    })
+  }
+  
+  // Konfirmasi delete dari modal
+  const confirmDelete = async () => {
+    if (!deleteConfirm.activityId) return
+    
     try {
-      const res = await fetch(`/api/activities/${id}`, { method: "DELETE" })
-      if (res.ok) fetchActivities()
+      const res = await fetch(`/api/activities/${deleteConfirm.activityId}/delete`, { method: "DELETE" })
+      if (res.ok) {
+        setSuccess('Berita berhasil dihapus')
+        fetchActivities()
+      } else {
+        const errorData = await res.json()
+        setError(errorData.error || 'Gagal menghapus berita')
+      }
     } catch (error) {
-      console.error("[v0] Error:", error)
+      console.error("[v0] Error during delete:", error)
+      setError('Terjadi kesalahan saat menghapus berita')
+    } finally {
+      setDeleteConfirm({ isOpen: false, activityId: null, activityTitle: '' })
     }
+  }
+  
+  // Batal delete
+  const cancelDelete = () => {
+    setDeleteConfirm({ isOpen: false, activityId: null, activityTitle: '' })
   }
 
   const handleEdit = (activity: Activity) => {
@@ -220,7 +285,7 @@ export default function KelolaBeritaPage() {
           imageUrl = uploadResult.imageUrl
         } else {
           const errorData = await uploadRes.json()
-          alert(errorData.error || 'Gagal mengupload gambar')
+          setError(errorData.error || 'Gagal mengupload gambar')
           return
         }
       }
@@ -248,13 +313,14 @@ export default function KelolaBeritaPage() {
         setFileError(null)
         setEditingId(null)
         setIsFormOpen(false)
+        setSuccess('Berita berhasil diperbarui')
         fetchActivities()
       } else {
-        alert('Gagal mengupdate berita')
+        setError('Gagal mengupdate berita')
       }
     } catch (error) {
       console.error("[v0] Error:", error)
-      alert('Terjadi kesalahan saat mengupdate berita')
+      setError('Terjadi kesalahan saat mengupdate berita')
     } finally {
       setIsUploading(false)
     }
@@ -301,6 +367,19 @@ export default function KelolaBeritaPage() {
           Tambah Berita
         </button>
       </div>
+
+      {/* Pesan Error dan Success */}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert className="mb-4 bg-green-50 border-green-200">
+          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        </Alert>
+      )}
         {/* Form */}
         {isFormOpen && (
           <div className="bg-background border border-border rounded-lg p-6 mb-8">
@@ -500,7 +579,7 @@ export default function KelolaBeritaPage() {
                       <Edit2 size={20} className="text-primary" />
                     </button>
                     <button
-                      onClick={() => handleDelete(activity.id)}
+                      onClick={() => handleDelete(activity.id, activity.title)}
                       className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                       title="Hapus"
                     >
@@ -526,6 +605,26 @@ export default function KelolaBeritaPage() {
             )}
           </>
         )}
+
+        {/* Modal Konfirmasi Hapus */}
+        <Dialog open={deleteConfirm.isOpen} onOpenChange={cancelDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={cancelDelete}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Hapus
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </AdminPageWrapper>
   )
 }

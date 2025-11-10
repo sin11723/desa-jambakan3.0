@@ -11,12 +11,25 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       database: process.env.DB_NAME || "desa_jambakan",
     })
 
-    await connection.execute("DELETE FROM tenun_products WHERE id = ?", [id])
+    // Cek apakah produk ada
+    const [existingProduct]: any = await connection.execute("SELECT id FROM tenun_products WHERE id = ?", [id])
+    if (existingProduct.length === 0) {
+      await connection.end()
+      return NextResponse.json({ error: "Product not found" }, { status: 404 })
+    }
 
+    // Hapus produk
+    const [result]: any = await connection.execute("DELETE FROM tenun_products WHERE id = ?", [id])
+    
     await connection.end()
-    return NextResponse.json({ success: true })
+    
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 })
+    }
+    
+    return NextResponse.json({ success: true, message: "Product deleted successfully" })
   } catch (error) {
-    console.error("[v0] Error:", error)
+    console.error("[v0] Error during delete:", error)
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 })
   }
 }

@@ -9,6 +9,15 @@ import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
 import Pagination from "@/components/Pagination"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface GalleryItem {
   id: number
@@ -37,6 +46,17 @@ export default function KelolaGaleriPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadedFileInfo, setUploadedFileInfo] = useState<{name: string, size: number} | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  
+  // State untuk modal konfirmasi delete
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    itemId: number | null;
+    itemTitle: string;
+  }>({
+    isOpen: false,
+    itemId: null,
+    itemTitle: ''
+  })
   
   // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -194,15 +214,33 @@ export default function KelolaGaleriPage() {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Yakin ingin menghapus gambar ini?")) return
-
+  const handleDelete = (id: number, title: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      itemId: id,
+      itemTitle: title
+    })
+  }
+  
+  // Konfirmasi delete dari modal
+  const confirmDelete = async () => {
+    if (!deleteConfirm.itemId) return
+    
     try {
-      const res = await fetch(`/api/gallery/${id}`, { method: "DELETE" })
-      if (res.ok) fetchGallery()
+      const res = await fetch(`/api/gallery/${deleteConfirm.itemId}`, { method: "DELETE" })
+      if (res.ok) {
+        fetchGallery()
+      }
     } catch (error) {
       console.error("[v0] Error:", error)
+    } finally {
+      setDeleteConfirm({ isOpen: false, itemId: null, itemTitle: '' })
     }
+  }
+  
+  // Batal delete
+  const cancelDelete = () => {
+    setDeleteConfirm({ isOpen: false, itemId: null, itemTitle: '' })
   }
 
   // Fungsi untuk handle perubahan halaman
@@ -398,14 +436,14 @@ export default function KelolaGaleriPage() {
                         {item.category}
                       </span>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           onClick={() => handleEdit(item)}
                           className="flex-1 p-2 hover:bg-muted rounded transition-colors text-xs font-medium text-primary"
                         >
                           <Edit2 size={16} className="mx-auto" />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(item.id, item.title)}
                           className="flex-1 p-2 hover:bg-destructive/10 rounded transition-colors text-xs font-medium text-destructive"
                         >
                           <Trash2 size={16} className="mx-auto" />
@@ -421,15 +459,35 @@ export default function KelolaGaleriPage() {
         
         {/* Pagination */}
         {totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            itemsPerPage={itemsPerPage}
-            totalItems={filteredGallery.length}
-            showInfo={true}
-          />
-        )}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                itemsPerPage={itemsPerPage}
+                totalItems={filteredGallery.length}
+                showInfo={true}
+              />
+            )}
+        
+        {/* Modal Konfirmasi Hapus */}
+        <Dialog open={deleteConfirm.isOpen} onOpenChange={cancelDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus foto "{deleteConfirm.itemTitle}"? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={cancelDelete}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Hapus
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </AdminPageWrapper>
   )
 }

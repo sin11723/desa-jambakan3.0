@@ -197,7 +197,7 @@ export default function KelolaKarawaitanPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">URL Gambar</label>
+                <label className="block text-sm font-semibold mb-2">URL Video</label>
                 <input
                   type="text"
                   value={formData.image_url}

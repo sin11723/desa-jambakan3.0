@@ -41,7 +41,15 @@ const menuItems = [
     title: "Kelola Struktur",
     icon: Users,
     href: "/admin/kelola-struktur",
-  },
+  }
+]
+
+const utilityItems = [
+  {
+    title: "Lihat Web Publik",
+    icon: LayoutDashboard,
+    href: "/",
+  }
 ]
 
 export default function AdminNavbar() {
@@ -92,6 +100,40 @@ export default function AdminNavbar() {
           <nav className="flex-1 p-4">
             <ul className="space-y-2">
               {menuItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? "bg-primary text-primary-foreground font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      } ${
+                        isSidebarOpen ? 'justify-start' : 'justify-center md:justify-center'
+                      }`}
+                      title={!isSidebarOpen ? item.title : ''}
+                    >
+                      <Icon size={20} className="flex-shrink-0" />
+                      <span className={`transition-all duration-300 ${
+                        isSidebarOpen ? 'opacity-100 translate-x-0 w-auto' : 'opacity-0 -translate-x-4 w-0 md:opacity-0 md:translate-x-0 md:w-0'
+                      }`}>
+                        {item.title}
+                      </span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+            
+            {/* Garis pembatas tipis antara menu utama dan menu utilitas */}
+            <div className="border-t border-border my-4"></div>
+            
+            {/* Menu Utilitas */}
+            <ul className="space-y-2">
+              {utilityItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
                 
