@@ -24,7 +24,9 @@ export default function RootLayout({
     <html lang="id">
       <body className={`font-sans antialiased`}>
         <Navbar />
-        {children}
+        <main className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {children}
+        </main>
         <FooterWrapper />
         <Analytics />
       </body>

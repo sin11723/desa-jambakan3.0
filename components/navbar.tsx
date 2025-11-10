@@ -15,8 +15,10 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isBudayaOpen, setIsBudayaOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const profileCloseTimeoutRef = useRef<number | null>(null)
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -30,8 +32,11 @@ export default function Navbar() {
     }
 
     document.addEventListener("mousedown", handleClickOutside)
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    window.addEventListener("scroll", onScroll)
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
+      window.removeEventListener("scroll", onScroll)
     }
   }, [])
 
@@ -53,12 +58,43 @@ export default function Navbar() {
     { label: "Struktur Desa", href: "/struktur" },
   ]
 
+  // Hover-intent helpers for Profile dropdown to prevent quick hide
+  const openProfile = () => {
+    if (profileCloseTimeoutRef.current) {
+      clearTimeout(profileCloseTimeoutRef.current)
+      profileCloseTimeoutRef.current = null
+    }
+    setIsProfileOpen(true)
+  }
+
+  const scheduleProfileClose = () => {
+    if (profileCloseTimeoutRef.current) {
+      clearTimeout(profileCloseTimeoutRef.current)
+    }
+    profileCloseTimeoutRef.current = window.setTimeout(() => {
+      setIsProfileOpen(false)
+      profileCloseTimeoutRef.current = null
+    }, 200)
+  }
+
   return (
-    <nav className="sticky top-0 z-50 bg-secondary border-b-4 border-accent shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          <Link href="/" className="font-bold text-2xl text-accent tracking-wider hover:scale-105 transition-transform">
-            🌿 DESA JAMBAKAN
+    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border shadow-md">
+      <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-4 sm:pr-6 lg:pl-6 lg:pr-8">
+        <div className={`flex justify-between items-center ${scrolled ? 'h-16' : 'h-20'} transition-all`}>
+          <Link href="/" className="flex items-center gap-3 group -ml-2 lg:-ml-4">
+            <img
+              src="https://commons.wikimedia.org/wiki/Special:FilePath/Seal_of_Klaten_Regency.svg"
+              alt="Lambang Kabupaten Klaten"
+              className="w-12 h-12"
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-xl sm:text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent tracking-wider group-hover:scale-[1.02] transition-transform">
+                DESA JAMBAKAN
+              </span>
+              <span className="text-sm sm:text-base text-muted-foreground/80 font-medium">
+                Kabupaten Klaten
+              </span>
+            </div>
           </Link>
 
           <div className="hidden md:flex gap-6 items-center">
@@ -66,33 +102,48 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-white font-semibold hover:text-accent transition-colors duration-300 relative group"
+                className="text-foreground/90 font-semibold hover:text-primary transition-colors duration-300 relative group"
               >
                 {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-1 bg-accent group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
               </Link>
             ))}
 
-            <div className="relative" ref={profileRef}>
+            <div
+              className="relative"
+              ref={profileRef}
+              onMouseEnter={openProfile}
+              onMouseLeave={scheduleProfileClose}
+            >
               <button
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="text-white font-semibold hover:text-accent transition-colors duration-300 relative group flex items-center gap-1"
+                onClick={() => {
+                  if (isProfileOpen) {
+                    setIsProfileOpen(false)
+                  } else {
+                    openProfile()
+                  }
+                }}
+                className="text-foreground/90 font-semibold hover:text-primary transition-colors duration-300 relative group flex items-center gap-1"
               >
                 Profile
                 <ChevronDown
                   size={16}
                   className={`transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
                 />
-                <span className="absolute bottom-0 left-0 w-0 h-1 bg-accent group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
               </button>
 
               {isProfileOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <div
+                  className="absolute top-full left-0 mt-2 w-56 bg-background/90 backdrop-blur rounded-lg shadow-lg border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2"
+                  onMouseEnter={openProfile}
+                  onMouseLeave={scheduleProfileClose}
+                >
                   {profileItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-accent transition-colors"
+                      className="block px-4 py-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                       onClick={() => setIsProfileOpen(false)}
                     >
                       {item.label}
@@ -103,26 +154,31 @@ export default function Navbar() {
             </div>
 
             {/* Budaya Dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            <div
+              className="relative"
+              ref={dropdownRef}
+              onMouseEnter={() => setIsBudayaOpen(true)}
+              onMouseLeave={() => setIsBudayaOpen(false)}
+            >
               <button
                 onClick={() => setIsBudayaOpen(!isBudayaOpen)}
-                className="text-white font-semibold hover:text-accent transition-colors duration-300 relative group flex items-center gap-1"
+                className="text-foreground/90 font-semibold hover:text-primary transition-colors duration-300 relative group flex items-center gap-1"
               >
                 Budaya
                 <ChevronDown
                   size={16}
                   className={`transition-transform duration-200 ${isBudayaOpen ? "rotate-180" : ""}`}
                 />
-                <span className="absolute bottom-0 left-0 w-0 h-1 bg-accent group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
               </button>
 
               {isBudayaOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <div className="absolute top-full left-0 mt-2 w-56 bg-background/90 backdrop-blur rounded-lg shadow-lg border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2">
                   {budayaItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-accent transition-colors"
+                      className="block px-4 py-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                       onClick={() => setIsBudayaOpen(false)}
                     >
                       {item.label}
@@ -136,26 +192,26 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-white font-semibold hover:text-accent transition-colors duration-300 relative group"
+                className="text-foreground/90 font-semibold hover:text-primary transition-colors duration-300 relative group"
               >
                 {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-1 bg-accent group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
               </Link>
             ))}
           </div>
 
-          <button className="md:hidden text-accent" onClick={() => setIsOpen(!isOpen)}>
+          <button className="md:hidden text-primary" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
 
         {isOpen && (
-          <div className="md:hidden pb-6 flex flex-col gap-3 bg-secondary/95">
+          <div className="md:hidden pb-6 flex flex-col gap-3 bg-background/95 backdrop-blur animate-in fade-in slide-in-from-top-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-white font-semibold hover:text-accent py-2 px-4 rounded transition-colors"
+                className="text-foreground font-semibold hover:text-primary py-2 px-4 rounded transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
@@ -165,7 +221,7 @@ export default function Navbar() {
             <div className="px-4">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="text-white font-semibold hover:text-accent py-2 rounded transition-colors flex items-center gap-1 w-full text-left"
+                className="text-foreground font-semibold hover:text-primary py-2 rounded transition-colors flex items-center gap-1 w-full text-left"
               >
                 Profile
                 <ChevronDown
@@ -180,7 +236,7 @@ export default function Navbar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="block text-white/80 font-medium hover:text-accent py-1 transition-colors"
+                      className="block text-muted-foreground font-medium hover:text-foreground py-1 transition-colors"
                       onClick={() => {
                         setIsOpen(false)
                         setIsProfileOpen(false)
@@ -197,7 +253,7 @@ export default function Navbar() {
             <div className="px-4">
               <button
                 onClick={() => setIsBudayaOpen(!isBudayaOpen)}
-                className="text-white font-semibold hover:text-accent py-2 rounded transition-colors flex items-center gap-1 w-full text-left"
+                className="text-foreground font-semibold hover:text-primary py-2 rounded transition-colors flex items-center gap-1 w-full text-left"
               >
                 Budaya
                 <ChevronDown
@@ -212,7 +268,7 @@ export default function Navbar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="block text-white/80 font-medium hover:text-accent py-1 transition-colors"
+                      className="block text-muted-foreground font-medium hover:text-foreground py-1 transition-colors"
                       onClick={() => {
                         setIsOpen(false)
                         setIsBudayaOpen(false)
@@ -229,7 +285,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-white font-semibold hover:text-accent py-2 px-4 rounded transition-colors"
+                className="text-foreground font-semibold hover:text-primary py-2 px-4 rounded transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}

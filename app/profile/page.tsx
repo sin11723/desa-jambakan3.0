@@ -115,13 +115,21 @@ export default function ProfilePage() {
       <section className="px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Header Image */}
-          <Card className="border-border/50 overflow-hidden">
+          <Card className="border-border/50 overflow-hidden group">
             <div className="relative w-full h-80 md:h-96 bg-gradient-to-br from-primary/10 to-secondary/10">
               <img
                 src={profile.image_url || "/placeholder.svg"}
                 alt={profile.desa_name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
+              {/* Cultural-themed hover overlay to align with Budaya pages */}
+              <div className="absolute inset-0 flex items-end justify-start p-4">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" aria-hidden="true"></div>
+                <div className="relative z-10 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-lg font-semibold drop-shadow-sm">{profile.desa_name}</h3>
+                  <p className="text-sm drop-shadow-sm">{profile.district}, {profile.province}</p>
+                </div>
+              </div>
             </div>
           </Card>
 

@@ -131,3 +131,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Animasi utilitas global untuk hover dan gradien */
+@keyframes shimmerGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hover-float {
+  transition: transform 200ms ease, color 200ms ease;
+}
+.hover-float:hover {
+  transform: translateY(-2px);
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: shimmerGradient 10s ease infinite;
+}
