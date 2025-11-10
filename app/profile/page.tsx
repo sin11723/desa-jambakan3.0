@@ -28,52 +28,31 @@ interface DesaProfile {
   image_url: string
 }
 
-const demographicData = [
-  { year: 2020, kelahiran: 85, kematian: 25, kepala_keluarga: 1650 },
-  { year: 2021, kelahiran: 92, kematian: 28, kepala_keluarga: 1720 },
-  { year: 2022, kelahiran: 110, kematian: 22, kepala_keluarga: 1780 },
-  { year: 2023, kelahiran: 128, kematian: 30, kepala_keluarga: 1820 },
-  { year: 2024, kelahiran: 115, kematian: 24, kepala_keluarga: 1850 },
-]
+interface DemographicItem {
+  id: number
+  year: number
+  kelahiran: number
+  kematian: number
+  kepala_keluarga: number
+}
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<DesaProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const mockProfile: DesaProfile = {
-    id: 1,
-    desa_name: "Desa Jambakan",
-    desa_code: "3210150001",
-    sub_district: "Jambakan",
-    district: "Klaten",
-    province: "Jawa Tengah",
-    description:
-      "Desa Jambakan adalah desa yang kaya dengan tradisi dan budaya lokal. Masyarakat desa ini terkenal dengan keahlian dalam membuat tenun tradisional yang indah dan memiliki nilai ekonomi tinggi.",
-    vision:
-      "Mewujudkan Desa Jambakan yang maju, sejahtera, dan berkelanjutan dengan tetap menjaga kelestarian budaya dan lingkungan.",
-    mission:
-      "1. Meningkatkan taraf hidup dan kesejahteraan masyarakat melalui pembangunan infrastruktur\n2. Melestarikan dan mengembangkan budaya lokal serta tradisi tenun\n3. Memberdayakan UMKM dan sektor ekonomi lokal\n4. Menjaga kelestarian lingkungan dan sumber daya alam",
-    history:
-      "Desa Jambakan memiliki sejarah panjang yang kaya dengan tradisi kerajinan tenun. Sejak zaman dulu, masyarakat desa ini telah terkenal dengan keahlian mereka dalam memproduksi tenun berkualitas tinggi yang diminati oleh berbagai kalangan.",
-    total_population: 8500,
-    total_families: 1850,
-    village_chief_name: "Bapak Sutrisno",
-    village_chief_phone: "+62 812-3456-7890",
-    area_km2: 25.5,
-    main_livelihoods: "Pertanian, Tenun Tradisional, Perdagangan",
-    contact_email: "info@desajambakan.go.id",
-    contact_phone: "+62 274-123456",
-    address: "Jalan Raya Desa No. 1, Kecamatan Jambakan, Kabupaten Klaten, Jawa Tengah 57432",
-    image_url: "/desa-jambakan-pemandangan.jpg",
-  }
+  const [demographics, setDemographics] = useState<DemographicItem[]>([])
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Simulasi fetch
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        setProfile(mockProfile)
+        const res = await fetch("/api/profile")
+        if (res.ok) {
+          const data = await res.json()
+          setProfile(data as DesaProfile)
+        } else {
+          const t = await res.json().catch(()=>({error:"Profile tidak ditemukan"}))
+          setError(t.error || "Profile tidak ditemukan")
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Terjadi kesalahan")
       } finally {
@@ -81,7 +60,20 @@ export default function ProfilePage() {
       }
     }
 
+    const fetchDemographics = async () => {
+      try {
+        const res = await fetch("/api/demographics")
+        if (res.ok) {
+          const data = await res.json()
+          setDemographics(data as DemographicItem[])
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data demografis", err)
+      }
+    }
+
     fetchProfile()
+    fetchDemographics()
   }, [])
 
   if (loading) {
@@ -229,16 +221,24 @@ export default function ProfilePage() {
                   {/* Birth and Death Distribution Pie Chart */}
                   <div className="flex flex-col items-center justify-center">
                     <h3 className="text-base font-semibold text-foreground mb-4 text-center">
-                      Distribusi Kelahiran & Kematian (2024)
+                      Distribusi Kelahiran & Kematian ({demographics.at(-1)?.year ?? "-"})
                     </h3>
                     <div className="w-full h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={[
-                              { name: "Kelahiran", value: 115 },
-                              { name: "Kematian", value: 24 },
-                            ]}
+                            data={(() => {
+                              const latest = demographics.at(-1)
+                              return latest
+                                ? [
+                                    { name: "Kelahiran", value: latest.kelahiran },
+                                    { name: "Kematian", value: latest.kematian },
+                                  ]
+                                : [
+                                    { name: "Kelahiran", value: 0 },
+                                    { name: "Kematian", value: 0 },
+                                  ]
+                            })()}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
@@ -272,7 +272,7 @@ export default function ProfilePage() {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={demographicData.map((d) => ({
+                            data={demographics.map((d) => ({
                               name: `${d.year}`,
                               value: d.kelahiran,
                             }))}
@@ -312,7 +312,7 @@ export default function ProfilePage() {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={demographicData.map((d) => ({
+                            data={demographics.map((d) => ({
                               name: `${d.year}`,
                               value: d.kepala_keluarga,
                             }))}
@@ -348,22 +348,22 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                   <Card className="border-border/50 hover:border-primary/30 transition-colors">
                     <CardContent className="p-6 text-center space-y-2">
-                      <div className="text-emerald-500 text-4xl font-bold">115</div>
-                      <p className="text-sm text-muted-foreground">Kelahiran Tahun 2024</p>
+                      <div className="text-emerald-500 text-4xl font-bold">{demographics.at(-1)?.kelahiran ?? 0}</div>
+                      <p className="text-sm text-muted-foreground">Kelahiran Tahun {demographics.at(-1)?.year ?? "-"}</p>
                     </CardContent>
                   </Card>
 
                   <Card className="border-border/50 hover:border-primary/30 transition-colors">
                     <CardContent className="p-6 text-center space-y-2">
-                      <div className="text-red-500 text-4xl font-bold">24</div>
-                      <p className="text-sm text-muted-foreground">Kematian Tahun 2024</p>
+                      <div className="text-red-500 text-4xl font-bold">{demographics.at(-1)?.kematian ?? 0}</div>
+                      <p className="text-sm text-muted-foreground">Kematian Tahun {demographics.at(-1)?.year ?? "-"}</p>
                     </CardContent>
                   </Card>
 
                   <Card className="border-border/50 hover:border-primary/30 transition-colors">
                     <CardContent className="p-6 text-center space-y-2">
-                      <div className="text-blue-500 text-4xl font-bold">1850</div>
-                      <p className="text-sm text-muted-foreground">Kepala Keluarga Tahun 2024</p>
+                      <div className="text-blue-500 text-4xl font-bold">{demographics.at(-1)?.kepala_keluarga ?? 0}</div>
+                      <p className="text-sm text-muted-foreground">Kepala Keluarga Tahun {demographics.at(-1)?.year ?? "-"}</p>
                     </CardContent>
                   </Card>
                 </div>

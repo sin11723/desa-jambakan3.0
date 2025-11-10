@@ -27,6 +27,7 @@ export default function KelolaKarawaitanPage() {
   const [itemsPerPage] = useState(10)
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -87,11 +88,45 @@ export default function KelolaKarawaitanPage() {
           image_url: "",
         })
         setIsFormOpen(false)
+        setEditingId(null)
         fetchKarawitan()
       }
     } catch (error) {
       console.error("[v0] Error:", error)
     }
+  }
+
+  const handleUpdateKarawitan = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingId) return
+    try {
+      const res = await fetch(`/api/karawitan/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
+        setFormData({ title: "", description: "", content: "", image_url: "" })
+        setIsFormOpen(false)
+        setEditingId(null)
+        fetchKarawitan()
+      }
+    } catch (error) {
+      console.error("[v0] Error:", error)
+    }
+  }
+
+  const startEdit = (item: Karawitan) => {
+    setIsFormOpen(true)
+    setEditingId(item.id)
+    setFormData({
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      image_url: item.image_url || "",
+    })
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const handleDelete = async (id: number) => {
@@ -123,8 +158,8 @@ export default function KelolaKarawaitanPage() {
         {/* Form */}
         {isFormOpen && (
           <div className="bg-background border border-border rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4">Tambah Konten Karawitan</h2>
-            <form onSubmit={handleAddKarawitan} className="space-y-4">
+            <h2 className="text-xl font-bold mb-4">{editingId ? "Edit Konten Karawitan" : "Tambah Konten Karawitan"}</h2>
+            <form onSubmit={editingId ? handleUpdateKarawitan : handleAddKarawitan} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">Judul</label>
                 <input
@@ -177,11 +212,11 @@ export default function KelolaKarawaitanPage() {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
                 >
-                  Simpan Konten
+                  {editingId ? "Simpan Perubahan" : "Simpan Konten"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsFormOpen(false)}
+                  onClick={() => { setIsFormOpen(false); setEditingId(null) }}
                   className="flex-1 px-4 py-2 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary/5 transition-colors"
                 >
                   Batal
@@ -214,7 +249,7 @@ export default function KelolaKarawaitanPage() {
                     <p className="text-xs text-muted-foreground line-clamp-1">{item.content}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="Edit">
+                    <button onClick={() => startEdit(item)} className="p-2 hover:bg-muted rounded-lg transition-colors" title="Edit">
                       <Edit2 size={20} className="text-primary" />
                     </button>
                     <button

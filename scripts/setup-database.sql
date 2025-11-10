@@ -58,6 +58,44 @@ CREATE TABLE IF NOT EXISTS gallery (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabel Profile Desa
+CREATE TABLE IF NOT EXISTS desa_profile (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  desa_name VARCHAR(200) NOT NULL,
+  desa_code VARCHAR(50),
+  sub_district VARCHAR(100),
+  district VARCHAR(100),
+  province VARCHAR(100),
+  description LONGTEXT,
+  vision LONGTEXT,
+  mission LONGTEXT,
+  history LONGTEXT,
+  total_population INT,
+  total_families INT,
+  village_chief_name VARCHAR(200),
+  village_chief_phone VARCHAR(100),
+  area_km2 DECIMAL(10,2),
+  main_livelihoods VARCHAR(300),
+  contact_email VARCHAR(200),
+  contact_phone VARCHAR(100),
+  address VARCHAR(500),
+  image_url VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabel Statistik Demografis Desa (per tahun)
+CREATE TABLE IF NOT EXISTS desa_demographics (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  year INT NOT NULL,
+  kelahiran INT DEFAULT 0,
+  kematian INT DEFAULT 0,
+  kepala_keluarga INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_year (year)
+);
+
 -- Add status column to existing tenun_products table (if it doesn't exist)
 ALTER TABLE tenun_products ADD COLUMN IF NOT EXISTS status ENUM('draft', 'published') DEFAULT 'published';
 

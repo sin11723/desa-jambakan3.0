@@ -19,6 +19,7 @@ interface DashboardStats {
   totalGallery: number
   totalKarawitan: number
   totalStruktur: number
+  totalProfile: number
 }
 
 export default function AdminDashboard() {
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
     totalGallery: 0,
     totalKarawitan: 0,
     totalStruktur: 0,
+    totalProfile: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -49,12 +51,22 @@ export default function AdminDashboard() {
           fetch("/api/struktur").then((r) => r.json()),
         ])
 
+        // Hitung profile: 1 jika ada, 0 jika tidak
+        let totalProfile = 0
+        try {
+          const res = await fetch("/api/profile")
+          totalProfile = res.ok ? 1 : 0
+        } catch (err) {
+          totalProfile = 0
+        }
+
         setStats({
           totalTenun: tenun.length || 0,
           totalActivities: activities.length || 0,
           totalGallery: gallery.length || 0,
           totalKarawitan: karawitan.length || 0,
           totalStruktur: struktur.length || 0,
+          totalProfile,
         })
       } catch (error) {
         console.error("[v0] Error:", error)
@@ -110,6 +122,13 @@ export default function AdminDashboard() {
       description: "Kelola konten karawitan",
     },
     {
+      title: "Kelola Profile",
+      icon: FileText,
+      href: "/admin/kelola-profile",
+      count: stats.totalProfile,
+      description: "Kelola profil desa (visi, misi, sejarah, dll)",
+    },
+    {
       title: "Kelola Struktur",
       icon: Users,
       href: "/admin/kelola-struktur",
@@ -129,7 +148,7 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-12">
             <div className="bg-background border border-border rounded-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -177,6 +196,16 @@ export default function AdminDashboard() {
                   <p className="text-3xl font-bold mt-2">{stats.totalStruktur}</p>
                 </div>
                 <Users size={32} className="text-primary opacity-50" />
+              </div>
+            </div>
+
+            <div className="bg-background border border-border rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Total Profile</p>
+                  <p className="text-3xl font-bold mt-2">{stats.totalProfile}</p>
+                </div>
+                <FileText size={32} className="text-primary opacity-50" />
               </div>
             </div>
           </div>

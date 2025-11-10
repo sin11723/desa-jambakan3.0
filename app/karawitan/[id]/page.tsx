@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Music } from "lucide-react"
+import KarawitanMedia from "@/components/karawitan-media"
 
 interface Karawitan {
   id: number
@@ -77,7 +78,7 @@ export default function KarawaitanDetailPage({ params }: { params: Promise<{ id:
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <div className="md:col-span-1">
             <div className="sticky top-20 rounded-lg overflow-hidden border border-border">
-              <img src={item.image_url || "/placeholder.svg"} alt={item.title} className="w-full h-96 object-cover" />
+              <KarawitanMedia src={item.image_url} alt={item.title} className="w-full h-96 object-cover" />
             </div>
           </div>
 

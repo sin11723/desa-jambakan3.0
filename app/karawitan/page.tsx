@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Music } from "lucide-react"
+import KarawitanMedia from "@/components/karawitan-media"
 
 interface Karawitan {
   id: number
@@ -58,10 +59,10 @@ export default function KarawaitanPage() {
               >
                 <div className="md:flex">
                   <div className="md:w-1/3 h-64 md:h-auto bg-muted overflow-hidden">
-                    <img
-                      src={item.image_url || "/placeholder.svg"}
+                    <KarawitanMedia
+                      src={item.image_url}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-6 md:w-2/3 flex flex-col justify-center">

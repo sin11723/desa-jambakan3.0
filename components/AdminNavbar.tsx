@@ -33,6 +33,11 @@ const menuItems = [
     href: "/admin/kelola-karawitan",
   },
   {
+    title: "Kelola Profile",
+    icon: FileText,
+    href: "/admin/kelola-profile",
+  },
+  {
     title: "Kelola Struktur",
     icon: Users,
     href: "/admin/kelola-struktur",

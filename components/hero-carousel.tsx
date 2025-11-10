@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface HeroSlide {
-  id: number
+  id: string
   image_url: string
   title?: string
 }
@@ -13,35 +14,50 @@ export default function HeroCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [loading, setLoading] = useState(true)
-  const [autoPlay, setAutoPlay] = useState(true)
+  const [isAutoPlay, setIsAutoPlay] = useState(true)
 
-  const mockSlides: HeroSlide[] = [
-    {
-      id: 1,
-      image_url: "/desa-jambakan-pemandangan-1.jpg",
-      title: "Keindahan Alam Desa Jambakan",
-    },
-    {
-      id: 2,
-      image_url: "/desa-jambakan-pemandangan-2.jpg",
-      title: "Tradisi Tenun Desa Jambakan",
-    },
-    {
-      id: 3,
-      image_url: "/desa-jambakan-pemandangan-3.jpg",
-      title: "Kehidupan Masyarakat Desa",
-    },
-  ]
-
+  // Ambil gambar dari Berita (activities) dan Budaya (karawitan)
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        // Simulasi fetch
-        await new Promise((resolve) => setTimeout(resolve, 300))
-        setSlides(mockSlides)
+        const [activitiesRes, karawitanRes] = await Promise.all([
+          fetch("/api/activities"),
+          fetch("/api/karawitan"),
+        ])
+
+        const activities = activitiesRes.ok ? await activitiesRes.json() : []
+        const karawitan = karawitanRes.ok ? await karawitanRes.json() : []
+
+        // Gabungkan dan pilih beberapa item terbaru, prioritaskan yang punya image_url
+        const activitySlides: HeroSlide[] = activities
+          .filter((a: any) => !!a.image_url)
+          .slice(0, 5)
+          .map((a: any) => ({ id: `a-${a.id}`, image_url: a.image_url, title: a.title }))
+
+        const karawitanSlides: HeroSlide[] = karawitan
+          .filter((k: any) => !!k.image_url)
+          .slice(0, 5)
+          .map((k: any) => ({ id: `k-${k.id}`, image_url: k.image_url, title: k.title }))
+
+        const combined = [...activitySlides, ...karawitanSlides]
+
+        // Jika tidak ada data, gunakan fallback gambar publik
+        if (combined.length === 0) {
+          setSlides([
+            { id: "f-1", image_url: "/desa-jambakan-pemandangan-1.jpg", title: "Desa Jambakan" },
+            { id: "f-2", image_url: "/desa-jambakan-pemandangan-2.jpg", title: "Budaya Desa" },
+            { id: "f-3", image_url: "/desa-jambakan-pemandangan-3.jpg", title: "Kehidupan Warga" },
+          ])
+        } else {
+          setSlides(combined)
+        }
       } catch (error) {
         console.error("[v0] Error fetching carousel slides:", error)
-        setSlides(mockSlides)
+        setSlides([
+          { id: "f-1", image_url: "/desa-jambakan-pemandangan-1.jpg", title: "Desa Jambakan" },
+          { id: "f-2", image_url: "/desa-jambakan-pemandangan-2.jpg", title: "Budaya Desa" },
+          { id: "f-3", image_url: "/desa-jambakan-pemandangan-3.jpg", title: "Kehidupan Warga" },
+        ])
       } finally {
         setLoading(false)
       }
@@ -50,29 +66,37 @@ export default function HeroCarousel() {
     fetchSlides()
   }, [])
 
+  // Autoplay mengikuti gaya contoh: berhenti saat interaksi, lanjut 10 detik kemudian
   useEffect(() => {
-    if (!slides.length || !autoPlay) return
+    if (!slides.length || !isAutoPlay) return
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [slides.length, autoPlay])
+  }, [slides.length, isAutoPlay])
+
+  const resumeAutoPlay = () => {
+    setTimeout(() => setIsAutoPlay(true), 10000)
+  }
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length)
-    setAutoPlay(false)
+    setIsAutoPlay(false)
+    resumeAutoPlay()
   }
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
-    setAutoPlay(false)
+    setIsAutoPlay(false)
+    resumeAutoPlay()
   }
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index)
-    setAutoPlay(false)
+    setIsAutoPlay(false)
+    resumeAutoPlay()
   }
 
   if (loading || slides.length === 0) {
@@ -84,11 +108,7 @@ export default function HeroCarousel() {
   }
 
   return (
-    <section
-      className="relative min-h-[600px] overflow-hidden group"
-      onMouseEnter={() => setAutoPlay(false)}
-      onMouseLeave={() => setAutoPlay(true)}
-    >
+    <section className="relative min-h-[600px] overflow-hidden group">
       {/* Carousel Container */}
       <div className="relative w-full h-full min-h-[600px]">
         {slides.map((slide, index) => (
@@ -119,19 +139,18 @@ export default function HeroCarousel() {
             Jelajahi keindahan karya tenun tradisional, warisan karawitan, dan budaya yang kaya dari Desa Jambakan
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
+            <Link
               href="/tenun"
               className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
             >
               Lihat Karya Tenun
-              <ChevronRight className="w-5 h-5" />
-            </a>
-            <a
+            </Link>
+            <Link
               href="/berita"
               className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors shadow-lg"
             >
               Baca Berita
-            </a>
+            </Link>
           </div>
         </div>
       </div>

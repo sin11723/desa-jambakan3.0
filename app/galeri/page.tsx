@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, X } from "lucide-react"
+import KarawitanMedia from "@/components/karawitan-media"
 
 interface GalleryItem {
   id: number
@@ -35,6 +36,28 @@ export default function GaleriPage() {
 
   const categories = ["All", ...Array.from(new Set(gallery.map((g) => g.category)))]
   const filtered = selectedCategory === "All" ? gallery : gallery.filter((g) => g.category === selectedCategory)
+
+  const getYouTubeId = (url: string): string | null => {
+    try {
+      const u = new URL(url)
+      if (u.hostname.includes("youtu.be")) {
+        const id = u.pathname.split("/").filter(Boolean)[0]
+        return id || null
+      }
+      if (u.hostname.includes("youtube.com")) {
+        if (u.pathname.startsWith("/watch")) {
+          const v = u.searchParams.get("v")
+          return v || null
+        }
+        const parts = u.pathname.split("/").filter(Boolean)
+        const idx = parts.findIndex((p) => p === "embed" || p === "shorts")
+        if (idx >= 0 && parts[idx + 1]) return parts[idx + 1]
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
 
   const handlePrevious = () => {
     if (!selectedImage) return
@@ -101,11 +124,17 @@ export default function GaleriPage() {
                   onClick={() => setSelectedImage(item)}
                   className="group relative mb-4 w-full rounded-lg overflow-hidden border border-border hover:border-primary transition-all cursor-pointer break-inside-avoid"
                 >
-                  <img
-                    src={item.image_url || "/placeholder.svg"}
-                    alt={item.title}
-                    className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  {(() => {
+                    const id = item.image_url ? getYouTubeId(item.image_url) : null
+                    const src = id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : item.image_url || "/placeholder.svg"
+                    return (
+                      <img
+                        src={src}
+                        alt={item.title}
+                        className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )
+                  })()}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-start p-4">
                     <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity">
                       <h3 className="font-bold text-sm line-clamp-1">{item.title}</h3>
@@ -138,13 +167,15 @@ export default function GaleriPage() {
               <X size={32} />
             </button>
 
-            {/* Image */}
+            {/* Media di modal: tinggi konsisten, isi penuh, responsif */}
             <div className="flex-1 flex items-center justify-center">
-              <img
-                src={selectedImage.image_url || "/placeholder.svg"}
-                alt={selectedImage.title}
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
-              />
+              <div className="relative w-full max-w-5xl h-[70vh] bg-black rounded-lg overflow-hidden">
+                <KarawitanMedia
+                  src={selectedImage.image_url}
+                  alt={selectedImage.title}
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              </div>
             </div>
 
             {/* Info & Navigation */}
