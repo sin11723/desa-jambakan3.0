@@ -9,6 +9,15 @@ import { Plus, Edit2, Trash2, ArrowLeft } from "lucide-react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import AdminPageWrapper from "@/components/AdminPageWrapper"
 import Pagination from "@/components/Pagination"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Karawitan {
   id: number
@@ -33,6 +42,11 @@ export default function KelolaKarawaitanPage() {
     description: "",
     content: "",
     image_url: "",
+  })
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    isOpen: false,
+    itemId: null as number | null,
+    itemTitle: ""
   })
 
   // Pagination logic
@@ -129,15 +143,31 @@ export default function KelolaKarawaitanPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Yakin ingin menghapus konten ini?")) return
-
+  const handleDelete = (id: number, title: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      itemId: id,
+      itemTitle: title
+    })
+  }
+  
+  const confirmDelete = async () => {
+    if (!deleteConfirm.itemId) return
+    
     try {
-      const res = await fetch(`/api/karawitan/${id}`, { method: "DELETE" })
-      if (res.ok) fetchKarawitan()
+      const res = await fetch(`/api/karawitan/${deleteConfirm.itemId}`, { method: "DELETE" })
+      if (res.ok) {
+        fetchKarawitan()
+      }
     } catch (error) {
       console.error("[v0] Error:", error)
+    } finally {
+      setDeleteConfirm({ isOpen: false, itemId: null, itemTitle: "" })
     }
+  }
+  
+  const cancelDelete = () => {
+    setDeleteConfirm({ isOpen: false, itemId: null, itemTitle: "" })
   }
 
   return (
@@ -253,7 +283,7 @@ export default function KelolaKarawaitanPage() {
                       <Edit2 size={20} className="text-primary" />
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item.id, item.title)}
                       className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                       title="Hapus"
                     >
@@ -277,6 +307,26 @@ export default function KelolaKarawaitanPage() {
             showInfo={true}
           />
         )}
+        
+        {/* Modal Konfirmasi Hapus */}
+        <Dialog open={deleteConfirm.isOpen} onOpenChange={(open) => !open && cancelDelete()}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus konten "{deleteConfirm.itemTitle}"? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={cancelDelete}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Hapus
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </AdminPageWrapper>
   )
 }
